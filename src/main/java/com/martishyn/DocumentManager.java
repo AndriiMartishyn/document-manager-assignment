@@ -21,7 +21,7 @@ public class DocumentManager {
 
     private Map<Long, Document> documents = new HashMap<>();
 
-    private AtomicLong idGenerator = new AtomicLong();
+    private AtomicLong idGenerator = new AtomicLong(1);
 
     /**
      * Implementation of this method should upsert the document to your storage
@@ -58,14 +58,14 @@ public class DocumentManager {
         boolean documentMatchesRequest = true;
 
         Predicate<List<String>> emptyOrNullListPredicate = list -> list == null || list.isEmpty();
-        if (emptyOrNullListPredicate.test(request.authorIds)) {
-            documentMatchesRequest &= request.getAuthorIds().stream().anyMatch(document.author.id::equals);
+        if (!emptyOrNullListPredicate.test(request.authorIds)) {
+            documentMatchesRequest &= request.getAuthorIds().contains(document.author.id);
         }
-        if (emptyOrNullListPredicate.test(request.titlePrefixes)) {
-            documentMatchesRequest &= request.getAuthorIds().stream().anyMatch(document.getTitle()::equals);
+        if (!emptyOrNullListPredicate.test(request.titlePrefixes)) {
+            documentMatchesRequest &= request.getTitlePrefixes().stream().anyMatch(document.getTitle()::startsWith);
         }
-        if (emptyOrNullListPredicate.test(request.containsContents)) {
-            documentMatchesRequest &= request.getAuthorIds().stream().anyMatch(document.getContent()::equals);
+        if (!emptyOrNullListPredicate.test(request.containsContents)) {
+            documentMatchesRequest &= request.getContainsContents().stream().anyMatch(document.getContent()::contains);
         }
         if (request.getCreatedFrom() != null && request.getCreatedTo() != null) {
             Instant documentCreateTimeStamp = document.getCreated();
