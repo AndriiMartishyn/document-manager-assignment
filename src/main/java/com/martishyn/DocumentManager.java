@@ -19,9 +19,9 @@ import java.util.function.Predicate;
  */
 public class DocumentManager {
 
-    private Map<Long, Document> documents = new HashMap<>();
+    private final Map<Long, Document> documents = new HashMap<>();
 
-    private AtomicLong idGenerator = new AtomicLong(1);
+    private final AtomicLong idGenerator = new AtomicLong(1);
 
     /**
      * Implementation of this method should upsert the document to your storage
@@ -37,8 +37,9 @@ public class DocumentManager {
             document.setId(String.valueOf(newlyGeneratedId));
             documents.put(newlyGeneratedId, document);
         } else {
-
-            documents.put(Long.valueOf(document.getId()), document);
+            long existingId = Long.parseLong(document.getId());
+            documents.put(existingId, document);
+            idGenerator.updateAndGet(current -> Math.max(current, existingId + 1));
         }
         return document;
     }
