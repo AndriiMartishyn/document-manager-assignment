@@ -6,7 +6,6 @@ import lombok.Data;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Predicate;
 
 /**
  * For implement this task focus on clear code, and make this solution as simple readable as possible
@@ -37,6 +36,7 @@ public class DocumentManager {
             document.setId(String.valueOf(newlyGeneratedId));
             documents.put(newlyGeneratedId, document);
         } else {
+
             documents.put(Long.valueOf(document.getId()), document);
         }
         return document;
@@ -55,23 +55,27 @@ public class DocumentManager {
     }
 
     private boolean findMatchingRequestByDocument(SearchRequest request, Document document) {
-        boolean documentMatchesRequest = true;
+        boolean documentMatchesRequest = false;
 
-        Predicate<List<String>> emptyOrNullListPredicate = list -> list == null || list.isEmpty();
-        if (!emptyOrNullListPredicate.test(request.authorIds)) {
-            documentMatchesRequest &= request.getAuthorIds().contains(document.author.id);
+        if (collectionIsNotNullOrEmpty(request.authorIds)) {
+            documentMatchesRequest |= request.getAuthorIds().contains(document.author.id);
         }
-        if (!emptyOrNullListPredicate.test(request.titlePrefixes)) {
-            documentMatchesRequest &= request.getTitlePrefixes().stream().anyMatch(document.getTitle()::startsWith);
+        if (collectionIsNotNullOrEmpty(request.titlePrefixes)) {
+            documentMatchesRequest |= request.getTitlePrefixes().stream().anyMatch(document.getTitle()::startsWith);
         }
-        if (!emptyOrNullListPredicate.test(request.containsContents)) {
-            documentMatchesRequest &= request.getContainsContents().stream().anyMatch(document.getContent()::contains);
+        if (collectionIsNotNullOrEmpty(request.containsContents)) {
+            documentMatchesRequest |= request.getContainsContents().stream().anyMatch(document.getContent()::contains);
         }
         if (request.getCreatedFrom() != null && request.getCreatedTo() != null) {
             Instant documentCreateTimeStamp = document.getCreated();
-            documentMatchesRequest &= documentCreateTimeStamp.isAfter(request.getCreatedFrom()) && documentCreateTimeStamp.isBefore(request.getCreatedTo());
+            documentMatchesRequest |= documentCreateTimeStamp.isAfter(request.getCreatedFrom()) && documentCreateTimeStamp.isBefore(request.getCreatedTo());
         }
+
         return documentMatchesRequest;
+    }
+
+    private static boolean collectionIsNotNullOrEmpty(Collection<?> collection) {
+        return collection != null && !collection.isEmpty();
     }
 
     /**
